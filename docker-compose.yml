@@ -1,0 +1,54 @@
+version: '3'
+
+services:
+
+  nginx:
+    image: nginx:latest
+    ports:
+        - 8809:80    
+    volumes:
+      - ./_docker/nginx/conf.d/:/etc/nginx/conf.d/
+      - ./:/var/www/
+    container_name: test_nginx
+    depends_on:
+      - app
+
+  app:
+    build: 
+      context: .
+      dockerfile: _docker/app/Dockerfile    
+    volumes:
+      - ./:/var/www/
+    depends_on:
+      - mysql
+    container_name: test
+
+  mysql:
+    image: mysql:8.0     
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=123
+      - MYSQL_DATABASE=star
+    volumes:
+      - ./tmp/db:/var/lib/mysql 
+      - ./_docker/logs/mysql:/var/log/mysql 
+    ports:
+      - 8109:3306
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci
+    container_name: test_mysql8
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    links:
+      - mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 123
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: 123        
+    restart: always
+    ports:
+      - 8089:80 
+    depends_on:
+      - mysql   
+    container_name: test_pma  
